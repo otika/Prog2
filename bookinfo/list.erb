@@ -36,10 +36,10 @@
     <tr>
       <% row.each_with_name do | val, name| %>
       <% if name == 'id' then %>
-      <td><input type="radio" name="operation" value=<%= "#{val}.delete" %></td>
-      <td><input type="radio" name="operation" value=<%= "#{val}.edit" %></td>
+      <td><input type="radio" name="operation" value=<%= "#{val}.delete" %> ></td>
+      <td><input type="radio" name="operation" value=<%= "#{val}.edit" %> ></td>
       <% end %>
-      <td><%= "#{val.to_s}" %></td>
+      <td> <%= "#{val.to_s}" %> </td>
       <% end %>
     </tr>
     <% end %>
