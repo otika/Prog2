@@ -24,5 +24,13 @@
       登録データ
     </th>
     <% ['id', 'title', 'author', 'page', 'publish_date'].each do |name| %>
+    <tr>
+      <td><%= name %></td>
+      <td><%= req.query[name] %></td>
+    </tr>
+    <% end %>
   </table>
+  <hr>
 </body>
+
+</html>

@@ -62,9 +62,9 @@ server.mount_proc("/entry") { |req, res|
     '#{req.query['page']}', '#{req.query['publish_date']}');")
 
     dbh.disconnect
-
     template = ERB.new( File.read('entried.erb'))
     res.body << template.result( binding )
+    puts "entried"
   end
 }
 
