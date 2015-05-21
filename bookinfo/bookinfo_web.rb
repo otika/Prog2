@@ -84,6 +84,27 @@ server.mount_proc("/retrieve"){ | req,res|
   res.body << template.result( binding)
 }
 
+server.mount_proc("/edit") { |req, res|
+  p req.query
+  dbh = DBI.connect( 'DBI:SQLite3:bookinfo_sqlite.db')
+  dbh.do("update bookinfos set id='#{req.query['author']}',\
+  page='#{req.query['page']}', publish_date='#{req.query['publish_date']}'\
+  where id='#{req.query['id']}';")
+  dbh.disconnect
+  template = ERB.new(File.read('edited.erb'))
+  res.body << template.result(binding)
+}
+
+server.mount_proc("/delete") { |req, res|
+  p req.query
+  dbh = DBI.connect( 'DBI:SQLite3:bookinfo_sqlite.db')
+  dbh.do("delete from bookinfos where id='#{req.query['id']}';")
+  dbh.do("delete from bookinfos where id='#{req.query['id']}';")
+  dbh.disconnect
+  template = ERB.new( File.read('deleted.erb'))
+  res.body << template.result( binding)
+}
+
 # proc_mount demo
 server.mount_proc("/testprog") {|req,res|
   res.body << "<html><body><p>アクセスした日付は#{Date.today.to_s}です。</p>"
