@@ -1,0 +1,118 @@
+プログラミング演習Ⅱ T15I917B 福井暉斗
+1.Rubyの書式
+  shellscriptなどと同様にインタプリタのパスを記述する。
+  また文字コードを指定するオプションを加える。
+  #!/usr/bin/ruby -Ku    （UTF-8環境の場合）
+
+2.コンソールに出力する関数
+  1.puts    改行が発生する
+  2.print   改行が発生しない
+  3.p       オブジェクトを表示する（デバッグ）
+
+3.文字列作成
+  １，シングルクオートを使った文字列リテラル
+  'hogehoge'
+  \nや\tなどの制御文字はや認識されずそのまま出力される
+
+
+  2.ダブルクオートを使った文字列リテラル
+  "hogehoge"
+  \nや\tなどの制御文字は認識され、対応された動作をする。
+
+    3.newメソッドを使用した文字列
+    StringクラスのNewメソッドを使用することで文字列が作成できる。
+    String.new("hogehoge")
+
+4.変数宣言・定義
+  変数宣言では型を明示しなくても、インタプリタが推論してくれる。
+  hoge = "hogehoge"
+
+5.文字列の特性
+    1.複数行に渡る場合は改行コードの制御文字を入れなくても改行が入る。
+
+    2.シングルクオートやダブルクオートで閉じられた文字列同士の間に空白を入れて、putsなどの関数に
+    渡しても空白は挿入されない。
+    例：puts "hogehoge" "puyopuyo"
+
+6.エスケープ制御文字
+  Cなどと同様にエスケープが使用可能である。
+  例：\n,\t,\rなど
+
+7.文字列連結
+  +メソッドの使用で文字列が連結できる
+  hoge = "hoge"
+  hogehoge = hoge + hogehoge
+  もとの文字列（hoge）に影響はしない
+
+8.文字列の追加
+  １．concat
+    hoge = "hoge"
+    hoge.concat("hoge")
+  2.<<メソッド
+    hoge = "hoge"
+    hoge << "hoge"
+
+  それぞれの文字列に文字列が追加される
+
+9.四則演算
+  加算  ： +
+  減算  ： -
+  乗算  ： *
+  除算  ： /
+  剰余  ： %
+  べき乗 ： **
+
+10.式展開
+  数値や計算式を式展開することができる。
+  val = 151
+  例　：　puts #{val}
+    -> 151
+
+１１．Dateクラス
+  日付の取得・操作ができる
+  クラスライブラリの使用にはrequire句が必要
+  例：　require 'date'
+
+  今日の日付の取得
+    today = Date.today
+
+  指定した日付の取得
+  　oneday = Date.new(2014,4,10)
+
+  日付を文字列に
+  　day.to_s
+
+  その他には
+  year    年
+  month   月
+  hour    時
+  min     分
+  sec     秒
+  wday    曜日を表す値（0〜6　0が日曜日）
+  yday    年内の通算日（0〜365　0が元旦）
+  zone    タイムゾーン
+
+12.配列（Arrayクラス）
+  1.配列の作成
+    1次元配列
+    　train_types = [ "local", "rapid", "express"]
+    2次元配列
+    　fruits_prices = [["apple",200], ["orange",100], ["melon", 600]]
+
+  2.配列の参照
+    puts train_types[1]
+      -> rapid
+
+  3.配列の要素の検索
+    puts train_types.index("local")
+      ->  0
+
+  4.要素を順に繰り返し取り出す
+    Arrayクラスの持つeachメソッドを使用する。
+    train_types.each{ |fp|
+      puts fp
+    }
+
+      ->  local
+          rapid
+          express

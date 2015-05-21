@@ -1,0 +1,21 @@
+<% # -*- coding: utf-8 -*- %>
+<% require 'rubygems' %>
+<% require 'dbi' %>
+
+<% dbh = DBI.connect( 'DBI:SQLite3:fruits01.db') %>
+
+<% sth = dbh.execute("select * from products") %>
+<html><body>
+<ul>
+
+<% sth.each do |row| %>
+<%  row.each_with_name do |val, name| %>
+  <li> <%= "#{name}: #{val.to_s}" %> </li>
+<%  end %>
+<hr>
+<% end %>
+</ul>
+</body></html>
+
+<% sth.finish %>
+<% dbh.disconnect %>
