@@ -68,6 +68,22 @@ server.mount_proc("/entry") { |req, res|
   end
 }
 
+server.mount_proc("/retrieve"){ | req,res|
+  p req.query
+  a = ['id','title','author', 'page', 'publish_date']
+  a.delete_if{|name| req.query[name] == ""}
+
+  if a.empty?
+    where_date=""
+  else
+    a.map! {|name| "#{name}='#{req.query[name]}'"}
+    where_date = "where " + a.join(' or ')
+  end
+
+  template = ERB.new( File.read('retrieved.erb'))
+  res.body << template.result( binding)
+}
+
 # proc_mount demo
 server.mount_proc("/testprog") {|req,res|
   res.body << "<html><body><p>アクセスした日付は#{Date.today.to_s}です。</p>"
