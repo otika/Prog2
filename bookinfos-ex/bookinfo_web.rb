@@ -51,43 +51,53 @@ server.mount_proc("/list") { |req, res|
 # データ登録を定義
 server.mount_proc("/entry") { |req, res|
   p req.query
-  dbh = DBI.connect( 'DBI:SQLite3:bookinfo_sqlite.db')
 
-  rows = dbh.select_one("select * from bookinfos where id='#{req.query['id']}';")
-  if rows then
-    dbh.disconnect
-    template = ERB.new( File.read('noentried.erb'))
-    res.body << template.result( binding)
-  else
-    dbh.do("insert into bookinfos \
-    values('#{req.query['id']}', '#{req.query['title']}', '#{req.query['author']}',\
-    '#{req.query['yomi']}', '#{req.query['publisher']}', '#{req.query['page']}',\
-    '#{req.query['price']}', '#{req.query['purchase_price']}','#{req.query['isbn_10']}',\
-    '#{req.query['isbn_13']}', '#{req.query['size']}',\
-    '#{req.query['publish_date']}', '#{req.query['purchase_date']}',\
-    '#{req.query['purchase_reason']}', '#{req.query['notes']}');")
+  begin
+    dbh = DBI.connect( 'DBI:SQLite3:bookinfo_sqlite.db')
+    dbh['AutoCommit']=false
+    dbh.transaction do
+      rows = dbh.select_one("select * from bookinfos where id='#{req.query['id']}';")
+      if rows then
 
-    dbh.disconnect
-    template = ERB.new( File.read('entried.erb'))
-    res.body << template.result( binding )
-    puts "entried"
+        template = ERB.new( File.read('noentried.erb'))
+        res.body << template.result( binding)
+      else
+        dbh.do("insert into bookinfos \
+        values('#{req.query['id']}', '#{req.query['title']}', '#{req.query['author']}',\
+        '#{req.query['yomi']}', '#{req.query['publisher']}', '#{req.query['page']}',\
+        '#{req.query['price']}', '#{req.query['purchase_price']}','#{req.query['isbn_10']}',\
+        '#{req.query['isbn_13']}', '#{req.query['size']}',\
+        '#{req.query['publish_date']}', '#{req.query['purchase_date']}',\
+        '#{req.query['purchase_reason']}', '#{req.query['notes']}');")
+
+        template = ERB.new( File.read('entried.erb'))
+        res.body << template.result( binding )
+        puts "entried"
+      end
+    end
+  rescue => e
+    p e
+  ensure
+    dbh.disconnect if dbh!=nil
   end
 }
 
 # データ検索を定義
-server.mount_proc("/retrieve"){ | req,res|
+server.mount_proc("/retrieve"){ |req,res|
   p req.query
   a = ['id', 'title', 'author', 'yomi', 'publisher', 'page', 'price', 'purchase_price', 'isbn_10', 'isbn_13', 'size', 'publish_date','purchase_date', 'purchase_reason', 'notes']
+  # 検索対象に含まれない要素を消す
   a.delete_if{|name| req.query[name] == ""}
+  # SQLインジェクション対策追加
 
+  # 検索対象が無い場合,where句を使わない
   if a.empty?
     where_date=""
   else
     a.map! {|name| "#{name}='#{req.query[name]}'"}
     where_date = "where " + a.join(' or ')
   end
-  puts where_date
-
+  a="booooooooooook"
   template = ERB.new( File.read('retrieved.erb'))
   res.body << template.result( binding)
 }

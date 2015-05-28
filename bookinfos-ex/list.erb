@@ -1,8 +1,10 @@
 <% # -*- coding: utf-8 -*- %>
 <% require 'rubygems' %>
 <% require 'dbi' %>
-
+<% #データベースの接続とオートコミットのオフ  %>
 <% dbh = DBI.connect( 'DBI:SQLite3:bookinfo_sqlite.db') %>
+<% dbh['AutoCommit'] = false%>
+<% dbh.transaction do %>
 <% sth = dbh.execute("select * from bookinfos;") %>
 
 <html>
@@ -49,4 +51,5 @@
 </body>
 </html>
 <% sth.finish %>
+<% end %>
 <% dbh.disconnect %>

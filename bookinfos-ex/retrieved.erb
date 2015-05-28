@@ -2,8 +2,11 @@
 <% require 'rubygems' %>
 <% require 'dbi' %>
 
+<% #データベースに接続 %>
 <% dbh = DBI.connect( 'DBI:SQLite3:bookinfo_sqlite.db') %>
-
+<% dbh["AutoCommit"]=false %>
+<% begin %>
+<% dbh.transaction do %>
 <% rows = dbh.select_all("select * from bookinfos #{where_date};") %>
 
 <html>
@@ -60,3 +63,9 @@
   <hr>
 </body>
 </html>
+<% end %>
+<% rescue => e %>
+  <% p e %>
+<% ensure %>
+  <% dbh.disconnect if dbh!=nil %>
+<% end %>
