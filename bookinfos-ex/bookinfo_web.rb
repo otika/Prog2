@@ -23,12 +23,12 @@ config = {
   :DocumentRoot => '.',
 }
 
+# erbハンドラを有効にしたサーバーのインスタンスを生成
 WEBrick::HTTPServlet::FileHandler.add_handler("erb", WEBrick::HTTPServlet::ERBHandler)
-
 server = WEBrick::HTTPServer.new(config)
-
 server.config[:MimeTypes]["erb"] = "text/html"
 
+# 一覧表示を定義
 server.mount_proc("/list") { |req, res|
   p req.query
   puts req.query['operation']
@@ -48,6 +48,7 @@ server.mount_proc("/list") { |req, res|
   end
 }
 
+# データ登録を定義
 server.mount_proc("/entry") { |req, res|
   p req.query
   dbh = DBI.connect( 'DBI:SQLite3:bookinfo_sqlite.db')
@@ -57,7 +58,7 @@ server.mount_proc("/entry") { |req, res|
     dbh.disconnect
     template = ERB.new( File.read('noentried.erb'))
     res.body << template.result( binding)
-  else                           
+  else
     dbh.do("insert into bookinfos \
     values('#{req.query['id']}', '#{req.query['title']}', '#{req.query['author']}',\
     '#{req.query['yomi']}', '#{req.query['publisher']}', '#{req.query['page']}',\
@@ -73,6 +74,7 @@ server.mount_proc("/entry") { |req, res|
   end
 }
 
+# データ検索を定義
 server.mount_proc("/retrieve"){ | req,res|
   p req.query
   a = ['id', 'title', 'author', 'yomi', 'publisher', 'page', 'price', 'purchase_price', 'isbn_10', 'isbn_13', 'size', 'publish_date','purchase_date', 'purchase_reason', 'notes']
@@ -90,22 +92,23 @@ server.mount_proc("/retrieve"){ | req,res|
   res.body << template.result( binding)
 }
 
+# データ修正を定義
 server.mount_proc("/edit") { |req, res|
   p req.query
   dbh = DBI.connect( 'DBI:SQLite3:bookinfo_sqlite.db')
-  
   dbh.do("update bookinfos set id='#{req.query['id']}', title='#{req.query['title']}',\
   author='#{req.query['author']}', yomi='#{req.query['yomi']}', publisher='#{req.query['publisher']}',\
   page='#{req.query['page']}', price='#{req.query['price']}', purchase_price='#{req.query['purchase_price']}',\
   isbn_10='#{req.query['isbn_10']}', isbn_13='#{req.query['isbn_13']}', size='#{req.query['size']}', \
   publish_date='#{req.query['publish_date']}', purchase_date='#{req.query['purchase_date']}',\
   purchase_reason='#{req.query['purchase_reason']}', notes='#{req.query['notes']}'\
-  where id='#{req.query['id']}';")
+  where id='#{req.query['prev_id']}';")
   dbh.disconnect
   template = ERB.new(File.read('edited.erb'))
   res.body << template.result(binding)
 }
 
+# データ削除を定義
 server.mount_proc("/delete") { |req, res|
   p req.query
   dbh = DBI.connect( 'DBI:SQLite3:bookinfo_sqlite.db')
@@ -116,21 +119,9 @@ server.mount_proc("/delete") { |req, res|
   res.body << template.result( binding)
 }
 
-# proc_mount demo
-server.mount_proc("/testprog") {|req,res|
-  res.body << "<html><body><p>アクセスした日付は#{Date.today.to_s}です。</p>"
-  res.body << "<p>リクエストのパスは#{req.path}でした。</p>"
-
-  res.body << "<ul>"
-  req.each { |key, value|
-    res.body << "<li>#{key} : #{value}</li>"
-  }
-  res.body << "</ul>"
-  res.body << "</body></html>"
-}
-
+# シグナルをトラップ
 trap(:INT) do
   server.shutdown
 end
-
+# サーバー起動
 server.start
