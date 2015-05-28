@@ -1,0 +1,9 @@
+'id', 'title', 'author', 'yomi', 'publisher', 'page', 'price', 
+'purchase_price', 'isbn_10', 'isbn_13', 'size', 
+'publish_date','purchase_date', 'purchase_reason', 'notes'
+
+'#{req.query[]}'
+
+'id', 'title', 'author', 'yomi', 'publisher', 'page', 'price', 'purchase_price', 'isbn_10', 'isbn_13', 'size', 'publish_date','purchase_date', 'purchase_reason', 'notes'
+
+='#{req.query['']}',

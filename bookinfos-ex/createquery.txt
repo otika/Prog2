@@ -1,0 +1,18 @@
+create table bookinfos(
+id varchar(50) not null,
+title varchar(100) not null,
+author varchar(100) not null,
+yomi varchar(100) not null,
+publisher varchar(100) not null,
+page int not null,
+price int not null,
+purchase_price int not null,
+isbn_10 varchar(100) not null,
+isbn_13 varchar(100) not null,
+size varchar(100) not null,
+publish_date datetime not null,
+purchase_date datetime not null,
+purchase_reason varchar(200) not null,
+notes varchar(200) not null,
+primary key(id));
+

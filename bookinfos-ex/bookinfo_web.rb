@@ -19,7 +19,7 @@ end
 
 # port 50917
 config = {
-  :Port => 8099,
+  :Port => 50917,
   :DocumentRoot => '.',
 }
 
@@ -31,6 +31,7 @@ server.config[:MimeTypes]["erb"] = "text/html"
 
 server.mount_proc("/list") { |req, res|
   p req.query
+  puts req.query['operation']
   if /(.*)\.(delete|edit)$/ =~ req.query['operation']
     target_id = $1
     operation = $2
@@ -56,10 +57,14 @@ server.mount_proc("/entry") { |req, res|
     dbh.disconnect
     template = ERB.new( File.read('noentried.erb'))
     res.body << template.result( binding)
-  else
+  else                           
     dbh.do("insert into bookinfos \
     values('#{req.query['id']}', '#{req.query['title']}', '#{req.query['author']}',\
-    '#{req.query['page']}', '#{req.query['publish_date']}');")
+    '#{req.query['yomi']}', '#{req.query['publisher']}', '#{req.query['page']}',\
+    '#{req.query['price']}', '#{req.query['purchase_price']}','#{req.query['isbn_10']}',\
+    '#{req.query['isbn_13']}', '#{req.query['size']}',\
+    '#{req.query['publish_date']}', '#{req.query['purchase_date']}',\
+    '#{req.query['purchase_reason']}', '#{req.query['notes']}');")
 
     dbh.disconnect
     template = ERB.new( File.read('entried.erb'))
@@ -70,7 +75,7 @@ server.mount_proc("/entry") { |req, res|
 
 server.mount_proc("/retrieve"){ | req,res|
   p req.query
-  a = ['id','title','author', 'page', 'publish_date']
+  a = ['id', 'title', 'author', 'yomi', 'publisher', 'page', 'price', 'purchase_price', 'isbn_10', 'isbn_13', 'size', 'publish_date','purchase_date', 'purchase_reason', 'notes']
   a.delete_if{|name| req.query[name] == ""}
 
   if a.empty?
@@ -79,6 +84,7 @@ server.mount_proc("/retrieve"){ | req,res|
     a.map! {|name| "#{name}='#{req.query[name]}'"}
     where_date = "where " + a.join(' or ')
   end
+  puts where_date
 
   template = ERB.new( File.read('retrieved.erb'))
   res.body << template.result( binding)
@@ -87,10 +93,14 @@ server.mount_proc("/retrieve"){ | req,res|
 server.mount_proc("/edit") { |req, res|
   p req.query
   dbh = DBI.connect( 'DBI:SQLite3:bookinfo_sqlite.db')
-  dbh.do("update bookinfos set id='#{req.query['id']}',\
-  title='#{req.query['title']}',author='#{req.query['author']}',\
-  page='#{req.query['page']}', publish_date='#{req.query['publish_date']}'\
-  where id='#{req.query['prev_id']}';")
+  
+  dbh.do("update bookinfos set id='#{req.query['id']}', title='#{req.query['title']}',\
+  author='#{req.query['author']}', yomi='#{req.query['yomi']}', publisher='#{req.query['publisher']}',\
+  page='#{req.query['page']}', price='#{req.query['price']}', purchase_price='#{req.query['purchase_price']}',\
+  isbn_10='#{req.query['isbn_10']}', isbn_13='#{req.query['isbn_13']}', size='#{req.query['size']}', \
+  publish_date='#{req.query['publish_date']}', purchase_date='#{req.query['purchase_date']}',\
+  purchase_reason='#{req.query['purchase_reason']}', notes='#{req.query['notes']}'\
+  where id='#{req.query['id']}';")
   dbh.disconnect
   template = ERB.new(File.read('edited.erb'))
   res.body << template.result(binding)

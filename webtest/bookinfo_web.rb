@@ -87,10 +87,9 @@ server.mount_proc("/retrieve"){ | req,res|
 server.mount_proc("/edit") { |req, res|
   p req.query
   dbh = DBI.connect( 'DBI:SQLite3:bookinfo_sqlite.db')
-  dbh.do("update bookinfos set id='#{req.query['id']}',\
-  title='#{req.query['title']}',author='#{req.query['author']}',\
+  dbh.do("update bookinfos set id='#{req.query['author']}',\
   page='#{req.query['page']}', publish_date='#{req.query['publish_date']}'\
-  where id='#{req.query['prev_id']}';")
+  where id='#{req.query['id']}';")
   dbh.disconnect
   template = ERB.new(File.read('edited.erb'))
   res.body << template.result(binding)
