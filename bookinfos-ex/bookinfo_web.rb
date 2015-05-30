@@ -106,7 +106,7 @@ server.mount_proc("/entry") { |req, res|
   rescue => e
     p e
     puts "SQLite3:rollback"
-    template = ERB.new( File.read( 'sqlerror.erb'))
+    template = ERB.new( File.read('sqlerror.erb'))
   ensure
     res.body << template.result( binding )
   end
@@ -124,9 +124,26 @@ server.mount_proc("/retrieve"){ |req,res|
   if a.empty?
     where_date=""
   else
-    a.map! {|name| "#{name}='#{req.query[name].gsub(/'/,"''").gsub(/\0/,"")}'"}
-    where_date = "where " + a.join(' or ')
+    a.map! {|name|
+      "#{name} like \
+      '%#{req.query[name].gsub(/'/,"''").gsub(/\0/,"").gsub(/([%_$])/,'$\1' )}%'"
+      }
+    p where_date = "where " + a.join(' or ') + " escape '$'"
   end
+  template = ERB.new( File.read('retrieved.erb'))
+  res.body << template.result( binding)
+}
+
+# フリーキーワード検索を定義
+server.mount_proc("/freekeyword"){ |req,res|
+  p req.query
+  p where_date = "where (  id || ' ' || title || ' ' || author || ' ' || \
+  yomi || ' ' || publisher || ' ' || page || ' ' || price || ' ' || \
+  purchase_price || ' ' || isbn_10 || ' ' || isbn_13 || ' ' || size || ' ' || \
+  publish_date || ' ' || purchase_date || ' ' || purchase_reason || ' ' || \
+  notes ) like \
+  '%#{req.query["keyword"].gsub(/'/,"''").gsub(/\0/,"").gsub(/([%_$])/,'$\1' )}%' \
+  escape '$'"
   template = ERB.new( File.read('retrieved.erb'))
   res.body << template.result( binding)
 }
