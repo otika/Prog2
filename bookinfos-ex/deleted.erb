@@ -21,10 +21,10 @@
     <% ['id', 'title', 'author', 'page', 'publish_date'].each do | name| %>
     <tr>
       <td>
-        <%= name %>
+        <%= name.escapeHtml %>
       </td>
       <td>
-        <%= req.query[name] %>
+        <%= req.query[name].escapeHtml %>
       </td>
     </tr>
     <% end %>

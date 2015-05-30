@@ -14,6 +14,22 @@ class String
       orig_concat value
     end
   end
+  # HTML Escape
+  def escapeHtml
+    # &, <, >, ', " HTML制御文字を無効化
+    self.gsub(/&/,'&amp;').gsub(/</,'&lt;').gsub(/>/,'&gt;').gsub(/"/,'&quot;').gsub(/'/,'&#39;')
+  end
+  # SQLite3 Escape
+  def escapeSqlite3
+    # SQLite3 インジェクション対策 シングルクオートとヌルを無効化
+    self.gsub(/'/,"''").gsub(/\0/,"")
+  end
+  # SQLite3
+  def escapeSqlite3Like(escape)
+    # SQLite3 like句の制御文字のエスケープとエスケープ文字自身をエスケープ
+    raise "Escape expression must be a single character" if escape==nil || escape.lengh!=1
+    self.escapeSqlite3.gsub(/([%_#{escape}])/,"#{escape}\\1")
+  end
 end
 # port 50917
 config = {
@@ -30,15 +46,19 @@ server.config[:MimeTypes]["erb"] = "text/html"
 server.mount_proc("/list") { |req, res|
   p req.query
   puts req.query['operation']
+  template = ERB.new(File.read('empty.erb'))
+  templateMsg1 = ""
+  templateMsg2 = ""
   if /(.*)\.(delete|edit)$/ =~ req.query['operation']
     target_id = $1
     operation = $2
     if operation == 'delete'
       dbh = DBI.connect( 'DBI:SQLite3:bookinfo_sqlite.db')
-      if nil != dbh.select_one("select id from bookinfos where id='#{target_id.gsub(/'/,"''").gsub(/\0/,"")}';")
+      if nil != dbh.select_one("select id from bookinfos where id='#{target_id.escapeSqlite3}';")
         template = ERB.new( File.read('delete.erb'))
       else
-        template = ERB.new( File.read('notfound.erb'))
+        templateMsg1 = "蔵書データの削除"
+        templateMsg2 = "指定したデータは存在しません"
       end
     elsif operation == 'edit'
       template = ERB.new( File.read('edit.erb'))
@@ -54,7 +74,7 @@ server.mount_proc("/list") { |req, res|
 # データ登録を定義
 server.mount_proc("/entry") { |req, res|
   p req.query
-  templateMsg1 = "Error"
+  templateMsg1 = "蔵書データの登録"
   templateMsg2 = ""
   template = ERB.new(File.read('empty.erb'))
 
@@ -62,51 +82,45 @@ server.mount_proc("/entry") { |req, res|
   dbh['AutoCommit']=false
   begin
     # 不整合発生要因とならない
-    rows = dbh.select_one("select * from bookinfos where id='#{req.query['id'].gsub(/'/,"''").gsub(/\0/,"")}';")
+    rows = dbh.select_one("select * from bookinfos where id='#{req.query['id'].escapeSqlite3}';")
     # IDが指定されていることを確認
     if req.query['id'] == ''
-      templateMsg1 = "蔵書データの登録"
       templateMsg2 = "IDを入力してください"
       puts "id empty"
-    # 半角スペースにマッチ
-    elsif req.query['id'] =~ / /
-      templateMsg1 = "蔵書データの登録"
-      templateMsg2 = "IDに半角スペースを含めないでください"
-      puts "id include space(half)"
-    #elsif !(checkQueryDate(req.query))
-    #  puts "query date nogood"
-
-    # データチェックPASS
-    else
+    elsif req.query['id'] =~ /^[A-Za-z0-9]+$/
+    # 英数字のみで構成されるID
       dbh.transaction do
         if rows then
           template = ERB.new( File.read('noentried.erb'))
         else
           dbh.do("insert into bookinfos \
-          values('#{req.query['id'].gsub(/'/,"''").gsub(/\0/,"")}', \
-          '#{req.query['title'].gsub(/'/,"''").gsub(/\0/,"")}', \
-          '#{req.query['author'].gsub(/'/,"''").gsub(/\0/,"")}',\
-          '#{req.query['yomi'].gsub(/'/,"''").gsub(/\0/,"")}', \
-          '#{req.query['publisher'].gsub(/'/,"''").gsub(/\0/,"")}', \
-          '#{req.query['page'].gsub(/'/,"''").gsub(/\0/,"")}',\
-          '#{req.query['price'].gsub(/'/,"''").gsub(/\0/,"")}', \
-          '#{req.query['purchase_price'].gsub(/'/,"''").gsub(/\0/,"")}',\
-          '#{req.query['isbn_10'].gsub(/'/,"''").gsub(/\0/,"")}',\
-          '#{req.query['isbn_13'].gsub(/'/,"''").gsub(/\0/,"")}', \
-          '#{req.query['size'].gsub(/'/,"''").gsub(/\0/,"")}',\
-          '#{req.query['publish_date'].gsub(/'/,"''").gsub(/\0/,"")}', \
-          '#{req.query['purchase_date'].gsub(/'/,"''").gsub(/\0/,"")}',\
-          '#{req.query['purchase_reason'].gsub(/'/,"''").gsub(/\0/,"")}', \
-          '#{req.query['notes'].gsub(/'/,"''").gsub(/\0/,"")}');")
+          values('#{req.query['id'].escapeSqlite3}', \
+          '#{req.query['title'].escapeSqlite3}', \
+          '#{req.query['author'].escapeSqlite3}',\
+          '#{req.query['yomi'].escapeSqlite3}', \
+          '#{req.query['publisher'].escapeSqlite3}', \
+          '#{req.query['page'].escapeSqlite3}',\
+          '#{req.query['price'].escapeSqlite3}', \
+          '#{req.query['purchase_price'].escapeSqlite3}',\
+          '#{req.query['isbn_10'].escapeSqlite3}',\
+          '#{req.query['isbn_13'].escapeSqlite3}', \
+          '#{req.query['size'].escapeSqlite3}',\
+          '#{req.query['publish_date'].escapeSqlite3}', \
+          '#{req.query['purchase_date'].escapeSqlite3}',\
+          '#{req.query['purchase_reason'].escapeSqlite3}', \
+          '#{req.query['notes'].escapeSqlite3}');")
           template = ERB.new( File.read('entried.erb'))
           puts "entried"
         end
       end
+    else
+      templateMsg2 = "IDには半角英数字以外使用しないでください"
+      puts "id entry error"
     end
   rescue => e
     p e
     puts "SQLite3:rollback"
-    template = ERB.new( File.read('sqlerror.erb'))
+    templateMsg2 = "データベースエラーで処理が取り消されました"
   ensure
     res.body << template.result( binding )
   end
@@ -126,7 +140,7 @@ server.mount_proc("/retrieve"){ |req,res|
   else
     a.map! {|name|
       "#{name} like \
-      '%#{req.query[name].gsub(/'/,"''").gsub(/\0/,"").gsub(/([%_$])/,'$\1' )}%'"
+      '%#{req.query[name].escapeSqlite3Like("$")}%'"
       }
     p where_date = "where " + a.join(' or ') + " escape '$'"
   end
@@ -137,12 +151,14 @@ server.mount_proc("/retrieve"){ |req,res|
 # フリーキーワード検索を定義
 server.mount_proc("/freekeyword"){ |req,res|
   p req.query
+  # idからnoteまでスペースを区切りとして文字列連結
+  # フリーキーワードであいまい検索
   p where_date = "where (  id || ' ' || title || ' ' || author || ' ' || \
   yomi || ' ' || publisher || ' ' || page || ' ' || price || ' ' || \
   purchase_price || ' ' || isbn_10 || ' ' || isbn_13 || ' ' || size || ' ' || \
   publish_date || ' ' || purchase_date || ' ' || purchase_reason || ' ' || \
   notes ) like \
-  '%#{req.query["keyword"].gsub(/'/,"''").gsub(/\0/,"").gsub(/([%_$])/,'$\1' )}%' \
+  '%#{req.query["keyword"].escapeSqlite3.gsub(/([%_$])/,'$\1' )}%' \
   escape '$'"
   template = ERB.new( File.read('retrieved.erb'))
   res.body << template.result( binding)
@@ -152,6 +168,8 @@ server.mount_proc("/freekeyword"){ |req,res|
 server.mount_proc("/edit") { |req, res|
   p req.query
   template = ERB.new(File.read('empty.erb'))
+  templateMsg1 = "蔵書データの修正"
+  templateMsg2 = ""
 
   dbh = DBI.connect( 'DBI:SQLite3:bookinfo_sqlite.db')
   dbh['AutoCommit']=false
@@ -160,7 +178,7 @@ server.mount_proc("/edit") { |req, res|
       # id重複チェック
       # idに変更が加えられるときに変更後idに一致するデータがあるなら変更を加えない
       if(req.query['id']!=req.query['prev_id'] &&
-        dbh.select_one("select id from bookinfos where id='#{req.query['id'].gsub(/'/,"''").gsub(/\0/,"")}';") )
+        dbh.select_one("select id from bookinfos where id='#{req.query['id'].escapeSqlite3}';") )
         # 変更後idと重複するデータを発見
         template = ERB.new(File.read('noentried.erb'))
       else
@@ -168,29 +186,29 @@ server.mount_proc("/edit") { |req, res|
         # BugTrack
         # 更新時に主キーが重複するとConstraintExceptionが投げられるが,
         # その段階でデータベースとの接続を切断すると,BusyExceptionが投げられるため切断できない
-        dbh.do("update bookinfos set id='#{req.query['id'].gsub(/'/,"''").gsub(/\0/,"")}', \
-        title='#{req.query['title'].gsub(/'/,"''").gsub(/\0/,"")}',\
-        author='#{req.query['author'].gsub(/'/,"''").gsub(/\0/,"")}', \
-        yomi='#{req.query['yomi'].gsub(/'/,"''").gsub(/\0/,"")}', \
-        publisher='#{req.query['publisher'].gsub(/'/,"''").gsub(/\0/,"")}',\
-        page='#{req.query['page'].gsub(/'/,"''").gsub(/\0/,"")}', \
-        price='#{req.query['price'].gsub(/'/,"''").gsub(/\0/,"")}', \
-        purchase_price='#{req.query['purchase_price'].gsub(/'/,"''").gsub(/\0/,"")}',\
-        isbn_10='#{req.query['isbn_10'].gsub(/'/,"''").gsub(/\0/,"")}', \
-        isbn_13='#{req.query['isbn_13'].gsub(/'/,"''").gsub(/\0/,"")}', \
-        size='#{req.query['size'].gsub(/'/,"''").gsub(/\0/,"")}', \
-        publish_date='#{req.query['publish_date'].gsub(/'/,"''").gsub(/\0/,"")}', \
-        purchase_date='#{req.query['purchase_date'].gsub(/'/,"''").gsub(/\0/,"")}',\
-        purchase_reason='#{req.query['purchase_reason'].gsub(/'/,"''").gsub(/\0/,"")}', \
-        notes='#{req.query['notes'].gsub(/'/,"''").gsub(/\0/,"")}'\
-        where id='#{req.query['prev_id'].gsub(/'/,"''").gsub(/\0/,"")}';")
+        dbh.do("update bookinfos set id='#{req.query['id'].escapeSqlite3}', \
+        title='#{req.query['title'].escapeSqlite3}',\
+        author='#{req.query['author'].escapeSqlite3}', \
+        yomi='#{req.query['yomi'].escapeSqlite3}', \
+        publisher='#{req.query['publisher'].escapeSqlite3}',\
+        page='#{req.query['page'].escapeSqlite3}', \
+        price='#{req.query['price'].escapeSqlite3}', \
+        purchase_price='#{req.query['purchase_price'].escapeSqlite3}',\
+        isbn_10='#{req.query['isbn_10'].escapeSqlite3}', \
+        isbn_13='#{req.query['isbn_13'].escapeSqlite3}', \
+        size='#{req.query['size'].escapeSqlite3}', \
+        publish_date='#{req.query['publish_date'].escapeSqlite3}', \
+        purchase_date='#{req.query['purchase_date'].escapeSqlite3}',\
+        purchase_reason='#{req.query['purchase_reason'].escapeSqlite3}', \
+        notes='#{req.query['notes'].escapeSqlite3}'\
+        where id='#{req.query['prev_id'].escapeSqlite3}';")
         template = ERB.new(File.read('edited.erb'))
       end
     end
   rescue => e
     p e
     puts "SQLite3:rollback"
-    template = ERB.new(File.read('sqlerror.erb'))
+    templateMsg2 = "データベースエラーで処理が取り消されました"
   ensure
     res.body << template.result( binding )
   end
@@ -200,13 +218,19 @@ server.mount_proc("/edit") { |req, res|
 # データ削除を定義
 server.mount_proc("/delete") { |req, res|
   p req.query
+  templateMsg1 = "蔵書データの削除"
+  templateMsg2 = ""
   template = ERB.new( File.read('empty.erb'))
   dbh = DBI.connect( 'DBI:SQLite3:bookinfo_sqlite.db')
   dbh["AutoCommit"]=false
   begin
     dbh.transaction do
-      dbh.do("delete from bookinfos where id='#{req.query['id'].gsub(/'/,"''").gsub(/\0/,"")}';")
-      template = ERB.new( File.read('deleted.erb'))
+      if 0 < p(dbh.do("delete from bookinfos where id='#{req.query['id'].escapeSqlite3}';"))
+        template = ERB.new( File.read('deleted.erb'))
+      else
+        templateMsg1 = "蔵書データの削除"
+        templateMsg2 = "指定したデータは既に存在しません"
+      end
     end
   rescue => e
     p e

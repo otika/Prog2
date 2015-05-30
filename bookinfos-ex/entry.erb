@@ -28,7 +28,7 @@
           <%= name %>
         </td>
         <td>
-          <input type="text" name="<%=name%>" size="60" />
+          <input type="text" name="<%=name.escapeHtml%>" size="60" />
         </td>
       </tr>
       <% end %>

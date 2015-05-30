@@ -1,9 +1,8 @@
 <%# -*- coding: utf-8 -*- %>
 <% require 'rubygems' %>
 <% require 'dbi' %>
-
 <% dbh = DBI.connect( 'DBI:SQLite3:bookinfo_sqlite.db') %>
-<% row = dbh.select_one("select * from bookinfos where id=\'#{target_id.gsub(/'/,"''").gsub(/\0/,"")}\';") %>
+<% row = dbh.select_one("select * from bookinfos where id=\'#{target_id.escapeSqlite3}\';") %>
 
 <html>
 <head>
@@ -23,23 +22,24 @@
   <hr>
   <div class="tablescroll">
   <form action="delete" method="post">
-    <input type="hidden" name="id" value="<%= target_id %>" />
+    <input type="hidden" name="id" value="<%= target_id.escapeHtml %>" />
     <table>
       <th>項目名</th>
       <th>削除データ</th>
       <% row.each_with_name do |val, name| %>
       <tr>
         <td>
-          <%= name %>
+          <%= name.escapeHtml %>
         </td>
         <td>
-          <%= val.to_s %>
+          <%= val.to_s.escapeHtml %>
         </td>
-        <input type="hidden" name="<%= name %>" value="<%= val.to_s %>" />
+        <input type="hidden" name="<%= name %>" value="<%= val.to_s.escapeHtml %>" />
       </tr>
       <% end %>
     </table>
     <input type="submit" value="削除を実行" />
+  </from>
   </div>
   <hr>
 </body>

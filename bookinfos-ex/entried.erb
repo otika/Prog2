@@ -25,8 +25,8 @@
     </th>
     <% ['id', 'title', 'author', 'yomi', 'publisher', 'page', 'price', 'purchase_price', 'isbn_10', 'isbn_13', 'size', 'publish_date','purchase_date', 'purchase_reason', 'notes'].each do |name| %>
     <tr>
-      <td><%= name %></td>
-      <td><%= req.query[name] %></td>
+      <td><%= name.escapeHtml %></td>
+      <td><%= req.query[name].escapeHtml %></td>
     </tr>
     <% end %>
   </table>

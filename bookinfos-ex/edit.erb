@@ -1,10 +1,8 @@
 <%# -*- coding: utf-8 -*- %>
 <% require 'rubygems' %>
 <% require 'dbi' %>
-
 <% dbh = DBI.connect( 'DBI:SQLite3:bookinfo_sqlite.db') %>
-
-<% sth = dbh.execute("select * from bookinfos where id=\'#{target_id.gsub(/'/,"''")}\';") %>
+<% row = dbh.select_one("select * from bookinfos where id=\'#{target_id.escapeSqlite3}\';") %>
 
 <html>
 <head>
@@ -23,21 +21,19 @@
   </p>
 
   <form action="edit" method="post">
-    <input type="hidden" name="prev_id" value="<%= target_id %>" />
+    <input type="hidden" name="prev_id" value="<%= target_id.escapeHtml %>" />
     <table>
-      <% sth.each do |row|  %>
       <th>項目名</th>
       <th>修正データ</th>
-      <% ['id', 'title', 'author', 'yomi', 'publisher', 'page', 'price', 'purchase_price', 'isbn_10', 'isbn_13', 'size', 'publish_date','purchase_date', 'purchase_reason', 'notes'].each do | name| %>
+      <% row.each_with_name do |val, name|  %>
       <tr>
         <td>
           <%= name %>
         </td>
         <td>
-          <input name="<%= name %>" value="<%= row[name] %>" size="60">
+          <input name="<%= name.escapeHtml %>" value="<%= val.to_s.escapeHtml %>" size="60">
         </td>
       </tr>
-      <% end %>
       <% end %>
     </table>
     <input type="submit" value="修正を実行">
