@@ -61,3 +61,8 @@ th {
   font-weight : bold;
   background-color : #a0b8c8;
 }
+
+div.tablescroll {
+  overflow-x: scroll;
+  overflow-x: auto;
+}

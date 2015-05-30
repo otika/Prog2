@@ -3,7 +3,7 @@
 <% require 'dbi' %>
 
 <% dbh = DBI.connect( 'DBI:SQLite3:bookinfo_sqlite.db') %>
-<% row = dbh.select_one("select * from bookinfos where id=\'#{target_id}\';") %>
+<% row = dbh.select_one("select * from bookinfos where id=\'#{target_id.gsub(/'/,"''").gsub(/\0/,"")}\';") %>
 
 <html>
 <head>
@@ -21,6 +21,7 @@
     <a href="index.html">メニュー画面に戻る</a>
   </p>
   <hr>
+  <div class="tablescroll">
   <form action="delete" method="post">
     <input type="hidden" name="id" value="<%= target_id %>" />
     <table>
@@ -39,7 +40,7 @@
       <% end %>
     </table>
     <input type="submit" value="削除を実行" />
-  </form>
+  </div>
   <hr>
 </body>
 </html>

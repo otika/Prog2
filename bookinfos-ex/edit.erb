@@ -4,7 +4,7 @@
 
 <% dbh = DBI.connect( 'DBI:SQLite3:bookinfo_sqlite.db') %>
 
-<% sth = dbh.execute("select * from bookinfos where id=\'#{target_id}\';") %>
+<% sth = dbh.execute("select * from bookinfos where id=\'#{target_id.gsub(/'/,"''")}\';") %>
 
 <html>
 <head>
