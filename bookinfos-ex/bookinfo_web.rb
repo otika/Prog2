@@ -27,7 +27,9 @@ class String
   # SQLite3
   def escapeSqlite3Like(escape)
     # SQLite3 like句の制御文字のエスケープとエスケープ文字自身をエスケープ
-    raise "Escape expression must be a single character" if escape==nil || escape.lengh!=1
+    if escape==nil || escape.length!=1
+      raise "Escape expression must be a single character"
+    end
     self.escapeSqlite3.gsub(/([%_#{escape}])/,"#{escape}\\1")
   end
 end
@@ -82,7 +84,9 @@ server.mount_proc("/entry") { |req, res|
   dbh['AutoCommit']=false
   begin
     # 不整合発生要因とならない
+    # ID重複チェック
     rows = dbh.select_one("select * from bookinfos where id='#{req.query['id'].escapeSqlite3}';")
+
     # IDが指定されていることを確認
     if req.query['id'] == ''
       templateMsg2 = "IDを入力してください"
@@ -93,6 +97,7 @@ server.mount_proc("/entry") { |req, res|
         if rows then
           template = ERB.new( File.read('noentried.erb'))
         else
+          # Rubyのバージョンによりハッシュ順番が保証されないため決め打ち
           dbh.do("insert into bookinfos \
           values('#{req.query['id'].escapeSqlite3}', \
           '#{req.query['title'].escapeSqlite3}', \
@@ -130,19 +135,21 @@ server.mount_proc("/entry") { |req, res|
 # データ検索を定義
 server.mount_proc("/retrieve"){ |req,res|
   p req.query
-  a = ['id', 'title', 'author', 'yomi', 'publisher', 'page', 'price', 'purchase_price', 'isbn_10', 'isbn_13', 'size', 'publish_date','purchase_date', 'purchase_reason', 'notes']
+  items = ['id', 'title', 'author', 'yomi', 'publisher', 'page', 'price',
+    'purchase_price', 'isbn_10', 'isbn_13', 'size', 'publish_date',
+    'purchase_date', 'purchase_reason', 'notes']
   # 検索対象に含まれない要素を消す
-  a.delete_if{|name| req.query[name] == ""}
+  items.delete_if{|name| req.query[name] == ""}
 
   # 検索対象が無い場合,where句を使わない
-  if a.empty?
+  if items.empty?
     where_date=""
   else
-    a.map! {|name|
+    items.map! {|name|
       "#{name} like \
       '%#{req.query[name].escapeSqlite3Like("$")}%'"
       }
-    p where_date = "where " + a.join(' or ') + " escape '$'"
+    where_date = "where " + items.join(' or ') + " escape '$'"
   end
   template = ERB.new( File.read('retrieved.erb'))
   res.body << template.result( binding)
@@ -153,12 +160,12 @@ server.mount_proc("/freekeyword"){ |req,res|
   p req.query
   # idからnoteまでスペースを区切りとして文字列連結
   # フリーキーワードであいまい検索
-  p where_date = "where (  id || ' ' || title || ' ' || author || ' ' || \
-  yomi || ' ' || publisher || ' ' || page || ' ' || price || ' ' || \
-  purchase_price || ' ' || isbn_10 || ' ' || isbn_13 || ' ' || size || ' ' || \
-  publish_date || ' ' || purchase_date || ' ' || purchase_reason || ' ' || \
-  notes ) like \
-  '%#{req.query["keyword"].escapeSqlite3.gsub(/([%_$])/,'$\1' )}%' \
+  items = ['id', 'title', 'author', 'yomi', 'publisher', 'page', 'price',
+    'purchase_price', 'isbn_10', 'isbn_13', 'size', 'publish_date',
+    'purchase_date', 'purchase_reason', 'notes']
+
+  where_date = "where upper( " + items.join("||' '||") + " ) like \
+  '%#{req.query["keyword"].escapeSqlite3.gsub(/([%_$])/,'$\1' ).upcase}%' \
   escape '$'"
   template = ERB.new( File.read('retrieved.erb'))
   res.body << template.result( binding)
@@ -186,22 +193,12 @@ server.mount_proc("/edit") { |req, res|
         # BugTrack
         # 更新時に主キーが重複するとConstraintExceptionが投げられるが,
         # その段階でデータベースとの接続を切断すると,BusyExceptionが投げられるため切断できない
-        dbh.do("update bookinfos set id='#{req.query['id'].escapeSqlite3}', \
-        title='#{req.query['title'].escapeSqlite3}',\
-        author='#{req.query['author'].escapeSqlite3}', \
-        yomi='#{req.query['yomi'].escapeSqlite3}', \
-        publisher='#{req.query['publisher'].escapeSqlite3}',\
-        page='#{req.query['page'].escapeSqlite3}', \
-        price='#{req.query['price'].escapeSqlite3}', \
-        purchase_price='#{req.query['purchase_price'].escapeSqlite3}',\
-        isbn_10='#{req.query['isbn_10'].escapeSqlite3}', \
-        isbn_13='#{req.query['isbn_13'].escapeSqlite3}', \
-        size='#{req.query['size'].escapeSqlite3}', \
-        publish_date='#{req.query['publish_date'].escapeSqlite3}', \
-        purchase_date='#{req.query['purchase_date'].escapeSqlite3}',\
-        purchase_reason='#{req.query['purchase_reason'].escapeSqlite3}', \
-        notes='#{req.query['notes'].escapeSqlite3}'\
-        where id='#{req.query['prev_id'].escapeSqlite3}';")
+        items = ['id', 'title', 'author', 'yomi', 'publisher', 'page', 'price', 'purchase_price', 'isbn_10', 'isbn_13', 'size', 'publish_date','purchase_date', 'purchase_reason', 'notes']
+        items.map!{ |name|
+          "#{name}='#{req.query[name].escapeSqlite3}'"
+        }
+        sqliteQuery = "update bookinfos set " + items.join(",") + "where id='#{req.query['prev_id'].escapeSqlite3}';"
+        dbh.do sqliteQuery
         template = ERB.new(File.read('edited.erb'))
       end
     end
@@ -225,7 +222,7 @@ server.mount_proc("/delete") { |req, res|
   dbh["AutoCommit"]=false
   begin
     dbh.transaction do
-      if 0 < p(dbh.do("delete from bookinfos where id='#{req.query['id'].escapeSqlite3}';"))
+      if 0 < dbh.do("delete from bookinfos where id='#{req.query['id'].escapeSqlite3}';")
         template = ERB.new( File.read('deleted.erb'))
       else
         templateMsg1 = "蔵書データの削除"
