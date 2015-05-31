@@ -16,7 +16,7 @@
   <h2>蔵書データの修正</h2>
   <p>
     このデータを修正します  |
-    <a href= "list.erb">蔵書データの表示</a> |
+    <a href= "/mainlist">蔵書データの表示</a> |
     <a href= "index.html">メニュー画面に戻る</a>
   </p>
 
@@ -28,7 +28,7 @@
       <% row.each_with_name do |val, name|  %>
       <tr>
         <td>
-          <%= name %>
+          <%= jpnametable[name].escapeHtml %>
         </td>
         <td>
           <input name="<%= name.escapeHtml %>" value="<%= val.to_s.escapeHtml %>" size="60">

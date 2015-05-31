@@ -5,8 +5,11 @@
 <% dbh = DBI.connect( 'DBI:SQLite3:bookinfo_sqlite.db') %>
 <% dbh['AutoCommit'] = false%>
 <% dbh.transaction do %>
-<% sth = dbh.execute("select * from bookinfos;") %>
-
+<% rawrows = dbh.select_all("select * from bookinfos;") %>
+<% displayitem=5 unless displayitem %>
+<% hits = rawrows.length %>
+<% maxpage = (hits.to_f / displayitem.to_f).ceil %>
+<% rows = rawrows.slice((page-1)*displayitem, displayitem) %>
 <html>
 <head>
   <meta http-equiv="Content-Type" content="text/html";
@@ -24,24 +27,49 @@
     <a href= "index.html">メニュー画面に戻る</a>
   </p>
   <hr>
-  <form class="freekeyword" action="freekeyword" method="post">
-    <p>
+  <div>
+    <%= hits %>件中<%= rows.length %>表示
+    <%= page %>ページ目
+    <form method="post" action="/mainlist">
+      表示件数:
+      <select name="displayitem" onchange="submit(this.form)">
+        <% selectitem = [5, 10, 30, 50] %>
+        <% selectitem.each do |item| %>
+          <% if displayitem == item %>
+            <%= "<option value=#{item} selected>#{item}件</option>"%>
+          <% else %>
+            <%= "<option value=#{item}>#{item}件</option>"%>
+          <% end %>
+        <% end %>
+      </select>
+      <% for i in 1..maxpage do %>
+        <a href="mainlist?page=<%= i.to_s %>&displayitem=<%= displayitem %>">
+          <%= i.to_s %>
+        </a>
+        &nbsp;
+      <% end %>
+    </form>
+  </div>
+
+  <div>
+    <form class="freekeyword" action="freekeyword" method="post">
       フリーキーワード検索: <input type="text" name="keyword" value="" placeholder="キーワード">
       <input type="submit" value="検索">
-    </p>
-  </form>
+    </form>
+  </div>
+
   <form method="post" action="list"/>
   <div class="tablescroll">
     <table class="list">
       <tr>
         <th>削除</th>
         <th>修正</th>
-        <% sth.column_names.each do |name| %>
-        <th><%= "#{name.escapeHtml}" %></th>
+        <% ['id', 'title', 'author', 'yomi', 'publisher', 'page', 'price', 'purchase_price', 'isbn_10', 'isbn_13', 'size', 'publish_date','purchase_date', 'purchase_reason', 'notes'].each do |name| %>
+        <th><%= "#{jpnametable[name].escapeHtml}" %></th>
         <% end %>
       </tr>
 
-      <% sth.each do |row| %>
+      <% rows.each do |row| %>
         <tr>
         <% row.each_with_name do | val, name| %>
         <% if name == 'id' then %>
@@ -58,6 +86,5 @@
   <hr>
 </body>
 </html>
-<% sth.finish %>
 <% end %>
 <% dbh.disconnect %>

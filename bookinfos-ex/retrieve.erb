@@ -1,4 +1,22 @@
 <%# -*- coding: utf-8 -*- %>
+<% jpnametable={
+  'id' => "ID",
+  'title' => "タイトル",
+  'author' => "著者名",
+  'yomi' => "よみがな",
+  'publisher' => "出版社",
+  'page' => "ページ数",
+  'price' => "本体価格",
+  'purchase_price' => "購入価格",
+  'isbn_10' => "ISBN-10",
+  'isbn_13' => "ISBN-13",
+  'size' => "寸法",
+  'publish_date' => "出版日",
+  'purchase_date' => "購入日",
+  'purchase_reason' => "購入理由",
+  'notes' => "備考"
+} %>
+
 <html>
 <head>
   <meta http-equiv="Content-Type" content="text/html";
@@ -11,7 +29,7 @@
   <h2>蔵書データの検索</h2>
   <p>
     検索条件を入力してください|
-    <a href="list.erb">蔵書データの表示</a>
+    <a href="/mainlist">蔵書データの表示</a>
     <a href="index.html">メニュー画面に戻る</a>
   </p>
   <hr>
@@ -30,7 +48,7 @@
       <% ['id', 'title', 'author', 'yomi', 'publisher', 'page', 'price', 'purchase_price', 'isbn_10', 'isbn_13', 'size', 'publish_date','purchase_date', 'purchase_reason', 'notes' ].each do |name| %>
       <tr>
         <td>
-          <%= name.escapeHtml %>
+          <%= jpnametable[name].escapeHtml %>
         </td>
         <td>
           <input type="text" name="<%= name %>" value="" size="60">

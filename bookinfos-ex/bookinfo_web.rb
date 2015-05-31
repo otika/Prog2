@@ -5,6 +5,24 @@ require 'erb'
 require 'rubygems'
 require 'dbi'
 
+jpnametable={
+  'id' => "ID",
+  'title' => "タイトル",
+  'author' => "著者名",
+  'yomi' => "よみがな",
+  'publisher' => "出版社",
+  'page' => "ページ数",
+  'price' => "本体価格",
+  'purchase_price' => "購入価格",
+  'isbn_10' => "ISBN-10",
+  'isbn_13' => "ISBN-13",
+  'size' => "寸法",
+  'publish_date' => "出版日",
+  'purchase_date' => "購入日",
+  'purchase_reason' => "購入理由",
+  'notes' => "備考"
+}
+
 class String
   alias_method(:orig_concat, :concat)
   def concat(value)
@@ -45,6 +63,18 @@ server = WEBrick::HTTPServer.new(config)
 server.config[:MimeTypes]["erb"] = "text/html"
 
 # 一覧表示を定義
+server.mount_proc("/mainlist"){ |req, res|
+  p req.query
+  # ページ指定なしor0なら1ページ目表示
+  page = req.query['page'].to_i
+  page=1 if page==0
+  displayitem = req.query['displayitem'].to_i
+  displayitem=5 if displayitem==0
+  template = ERB.new(File.read('list.erb'))
+  res.body << template.result(binding)
+}
+
+# listから削除と修正を受け取る
 server.mount_proc("/list") { |req, res|
   p req.query
   puts req.query['operation']
@@ -205,6 +235,7 @@ server.mount_proc("/edit") { |req, res|
   rescue => e
     p e
     puts "SQLite3:rollback"
+    puts e.backtrace.join("\n")
     templateMsg2 = "データベースエラーで処理が取り消されました"
   ensure
     res.body << template.result( binding )

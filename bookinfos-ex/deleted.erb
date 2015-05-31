@@ -11,7 +11,7 @@
   <h2>蔵書データの削除</h2>
   <p>
     このデータを削除しました|
-    <a href="list.erb">蔵書データの表示</a>
+    <a href="/mainlist">蔵書データの表示</a>
     <a href="index.html">メニュー画面に戻る</a>
   </p>
   <hr>
@@ -21,7 +21,7 @@
     <% ['id', 'title', 'author', 'page', 'publish_date'].each do | name| %>
     <tr>
       <td>
-        <%= name.escapeHtml %>
+        <%= jpnametable[name].escapeHtml %>
       </td>
       <td>
         <%= req.query[name].escapeHtml %>

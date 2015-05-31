@@ -23,7 +23,7 @@
   <h2>蔵書データがありません</h2>
   <p>
     検索条件を見なおしてから実行してください  |
-    <a href= "list.erb">蔵書データの表示</a> |
+    <a href= "/mainlist">蔵書データの表示</a> |
     <a href= "index.html">メニュー画面に戻る</a>
   </p>
 
@@ -31,7 +31,7 @@
   <h2>検索条件の表示</h2>
   <p>
     処理する蔵書データを選択してください |
-    <a href= "list.erb">蔵書データの表示</a> |
+    <a href= "/mainlist">蔵書データの表示</a> |
     <a href= "index.html">メニュー画面に戻る</a>
   </p>
   <hr>
@@ -43,7 +43,7 @@
       <th>削除</th>
       <th>修正</th>
       <% ['id', 'title', 'author', 'yomi', 'publisher', 'page', 'price', 'purchase_price', 'isbn_10', 'isbn_13', 'size', 'publish_date','purchase_date', 'purchase_reason', 'notes'].each do |name| %>
-      <th><%= "#{name.escapeHtml}" %></th>
+      <th><%= "#{jpnametable[name].escapeHtml}" %></th>
       <% end %>
     </tr>
 

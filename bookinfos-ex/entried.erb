@@ -1,5 +1,4 @@
 <%# -*- coding: utf-8 -*- %>
-
 <html>
 <head>
   <meta http-equiv="Content-Type" content="text/html";
@@ -12,7 +11,7 @@
   <h2>蔵書データの登録</h2>
   <p>
     下記の蔵書データを登録しました  |
-    <a href= "list.erb">蔵書データの表示</a> |
+    <a href= "/mainlist">蔵書データの表示</a> |
     <a href= "index.html">メニュー画面に戻る</a>
   </p>
   <hr>
@@ -25,7 +24,7 @@
     </th>
     <% ['id', 'title', 'author', 'yomi', 'publisher', 'page', 'price', 'purchase_price', 'isbn_10', 'isbn_13', 'size', 'publish_date','purchase_date', 'purchase_reason', 'notes'].each do |name| %>
     <tr>
-      <td><%= name.escapeHtml %></td>
+      <td><%= jpnametable[name].escapeHtml %></td>
       <td><%= req.query[name].escapeHtml %></td>
     </tr>
     <% end %>

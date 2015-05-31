@@ -16,7 +16,7 @@
   <h2>蔵書データの削除</h2>
   <p>
     このデータを削除します|
-    <a href="list.erb">蔵書データの表示</a>
+    <a href="/mainlist">蔵書データの表示</a>
     <a href="index.html">メニュー画面に戻る</a>
   </p>
   <hr>
@@ -29,7 +29,7 @@
       <% row.each_with_name do |val, name| %>
       <tr>
         <td>
-          <%= name.escapeHtml %>
+          <%= jpnametable[name].escapeHtml %>
         </td>
         <td>
           <%= val.to_s.escapeHtml %>
