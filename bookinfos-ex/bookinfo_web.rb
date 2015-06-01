@@ -126,6 +126,7 @@ server.mount_proc("/entry") { |req, res|
       dbh.transaction do
         if rows then
           template = ERB.new( File.read('noentried.erb'))
+          puts "id duplication error"
         else
           # Rubyのバージョンによりハッシュ順番が保証されないため決め打ち
           dbh.do("insert into bookinfos \
@@ -150,7 +151,7 @@ server.mount_proc("/entry") { |req, res|
       end
     else
       templateMsg2 = "IDには半角英数字以外使用しないでください"
-      puts "id entry error"
+      puts "invalidate id error"
     end
   rescue => e
     p e
@@ -216,8 +217,13 @@ server.mount_proc("/edit") { |req, res|
       # idに変更が加えられるときに変更後idに一致するデータがあるなら変更を加えない
       if(req.query['id']!=req.query['prev_id'] &&
         dbh.select_one("select id from bookinfos where id='#{req.query['id'].escapeSqlite3}';") )
-        # 変更後idと重複するデータを発見
+        # 修正後IDとIDが重複するデータを発見
         template = ERB.new(File.read('noentried.erb'))
+        puts "id duplication error"
+        # 半角英数のみで構成されるID
+      elsif !(req.query['id'] =~ /^[A-Za-z0-9]+$/)
+        templateMsg2 = "IDには半角英数字以外使用しないでください"
+        puts "invalidate id error"
       else
         # 更新
         # BugTrack
