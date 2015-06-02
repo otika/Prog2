@@ -18,7 +18,7 @@
   <table>
     <th>項目名</th>
     <th>削除データ</th>
-    <% ['id', 'title', 'author', 'page', 'publish_date'].each do | name| %>
+    <% ['id', 'title', 'author', 'yomi', 'publisher', 'page', 'price', 'purchase_price', 'isbn_10', 'isbn_13', 'size', 'publish_date','purchase_date', 'purchase_reason', 'notes'].each do | name| %>
     <tr>
       <td>
         <%= jpnametable[name].escapeHtml %>
