@@ -180,7 +180,7 @@ server.mount_proc("/retrieve"){ |req,res|
       "#{name} like \
       '%#{req.query[name].escapeSqlite3Like("$")}%'"
       }
-    where_date = "where " + items.join(' or ') + " escape '$'"
+    where_date = "where " + items.join(' and ') + " escape '$'"
   end
   template = ERB.new( File.read('retrieved.erb'))
   res.body << template.result( binding)
